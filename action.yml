@@ -13,6 +13,10 @@ inputs:
     description: compile bit number 32|64
     required: false
     default: 64
+  icon:
+    description: The path and name of the icon file
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -41,6 +45,12 @@ runs:
         $command = 'ahk2exe.exe /silent verbose '
         if('${{inputs.in}}' -ne ''){
           $command += '/in "${{inputs.in}}" '
+          if('${{inputs.icon}}' -eq ''){
+            $icon = [System.IO.Path]::ChangeExtension('${{inputs.in}}', '.ico')
+          } else {
+            $icon = '${{inputs.icon}}'
+          }
+          $command += '/icon "$icon" '
         }
         if('${{inputs.out}}' -ne ''){
           $command += '/out "${{inputs.out}}" '
@@ -48,10 +58,4 @@ runs:
         if('${{inputs.base}}' -ne ''){
           $command += '/base "$Env:BaseFile" '
         }
-        $command += "| Write-Output"
-        Invoke-Expression $command
-        echo $command
-
-branding:
-  color: gray-dark
-  icon: anchor
+        Write-Output $command
