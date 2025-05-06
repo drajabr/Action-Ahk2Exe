@@ -21,16 +21,13 @@ runs:
       shell: pwsh
       run: |
         $wd = (Get-Item .).FullName
-        # 下载AHK主程序
         Invoke-WebRequest (Invoke-RestMethod https://api.github.com/repos/AutoHotkey/AutoHotkey/releases/latest).assets[0].browser_download_url -OutFile "$wd\autohotkey.zip";
-        # 下载AHK2Exe
         $response = Invoke-RestMethod "https://api.github.com/repos/AutoHotkey/Ahk2Exe/releases/latest"
         foreach ($asset in $response[0].assets) {
           $url = $asset.browser_download_url
         }
         Invoke-WebRequest $url -OutFile "$wd\autohotkey2exe.zip";
         
-        # 解压
         Expand-Archive -Path "$wd\autohotkey.zip" -DestinationPath "$wd\autoHotkey\" -Force;
         Expand-Archive -Path "$wd\autohotkey2exe.zip" -DestinationPath "$wd\autoHotkey\Compiler" -Force;
         Remove-Item -Path "$wd\autohotkey.zip" -Force
