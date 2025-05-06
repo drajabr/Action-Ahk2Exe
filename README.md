@@ -1,18 +1,17 @@
 # Action-Ahk2Exe
 GitHub Action to compile AutoHotKey V2 scripts using Ahk2Exe
 
-Reference to https://github.com/nekocodeX/GitHub-Action-Ahk2Exe/tree/main
-
 # Inputs
 |  name    | Type     |Required|Description |
 |:-----|:-----|:-----|:-----|
 |in|String|True|The path and name of the script to compile|
 |out|String |False|The path\name of the output .exe to be created|
 |base|Number |False|compile bit number 32\|64, default 64|
+|icon|String |False|The path and name of the icon file|
 
 # Example usage
 ```yml
-name: Install ahkv2 on Windows
+name: Compile AHKV2 Script
 
 on:
   push:
@@ -20,21 +19,32 @@ on:
       - main
 
 jobs:
-  build:
+  compile:
     runs-on: windows-latest
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
-    - name: Ahk2Exe
-      uses: CCCC-L/Action-Ahk2Exe@main
+    - name: Compile AutoHotKey Script
+      uses: your-username/your-repo@main  # Replace with actual repo path where action.yml is
       with:
-        in: example.ahk
+        in: src/myScript.ahk              # Path to your .ahk file
+        out: dist/myScript.exe            # Output .exe path (optional)
+        base: 64                          # Architecture (optional: 32 or 64)
+        icon: assets/myIcon.ico           # Icon path (optional)
 
-    - name: Release
-      uses: actions/upload-artifact@master
+    - name: Upload Compiled Executable
+      uses: actions/upload-artifact@v3
       with:
-        name: example
-        path: example.exe
+        name: MyCompiledScript
+        path: dist/myScript.exe
 ```
+
+
+# Credits:
+[@nekocodeX](https://github.com/nekocodeX) For his reference work for [v1 ](https://github.com/nekocodeX/GitHub-Action-Ahk2Exe/tree/main).
+
+[@CCCC-L](https://github.com/CCCC-L) For the v2 port [AHK v2 Actions template](https://github.com/CCCC-L/Action-Ahk2Exe).
+
+[@alfvar](https://github.com/alfvar) For adding icon support in his repo [AHK v2 Actions template](https://github.com/alfvar/action-ahk2exe)
