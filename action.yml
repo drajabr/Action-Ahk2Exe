@@ -42,7 +42,7 @@ runs:
     - name: Run AHK2Exe
       shell: pwsh
       run: |
-        $command = 'ahk2exe.exe verbose '
+        $command = 'ahk2exe.exe /silent verbose '
         if('${{inputs.in}}' -ne ''){
           $command += '/in "${{inputs.in}}" '
           if('${{inputs.icon}}' -eq ''){
