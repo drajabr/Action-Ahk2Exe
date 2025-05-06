@@ -1,6 +1,6 @@
 name: Compile AHKV2 Script
 description: GitHub Action to compile AutoHotKey V2 scripts using Ahk2Exe
-author: CCCC-L, nekocodeX
+author: alfvar , CCCC-L, nekocodeX
 
 inputs:
   in:
@@ -58,4 +58,6 @@ runs:
         if('${{inputs.base}}' -ne ''){
           $command += '/base "$Env:BaseFile" '
         }
+        Invoke-Expression $command
+
         Write-Output $command
