@@ -27,7 +27,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Compile AutoHotKey Script
-      uses: your-username/your-repo@main  # Replace with actual repo path where action.yml is
+      uses: drajabr/Action-Ahk2Exe@main
       with:
         in: src/myScript.ahk              # Path to your .ahk file
         out: dist/myScript.exe            # Output .exe path (optional)
