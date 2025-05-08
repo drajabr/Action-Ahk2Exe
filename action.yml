@@ -3,6 +3,9 @@ description: GitHub Action to compile AutoHotKey V2 scripts using Ahk2Exe
 author: alfvar , CCCC-L, nekocodeX
 
 inputs:
+  token:
+    description: GitHub personal access token
+    default: ${{ github.token }}
   in:
     description: Path of the script to compile
     required: true
@@ -30,8 +33,14 @@ runs:
       run: |
         $wd = $env:WORKING_DIRECTORY
 
+        $headers = @{
+          Authorization = "Bearer $env:token"
+          "Content-Type" = "application/json"
+        }
+        
         # Download and extract AutoHotkey
-        $ahkRelease = Invoke-RestMethod "https://api.github.com/repos/AutoHotkey/AutoHotkey/releases/latest"
+        $uri = "https://api.github.com/repos/AutoHotkey/AutoHotkey/releases/latest"
+        $ahkRelease = Invoke-RestMethod -Uri $uri -Headers $headers
         $ahkZip = Join-Path $wd "autohotkey.zip"
         Invoke-WebRequest $ahkRelease.assets[0].browser_download_url -OutFile $ahkZip
 
@@ -49,6 +58,8 @@ runs:
         # Add to PATH and export ahkEXE
         "$wd\AutoHotkey;$wd\AutoHotkey\Compiler" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         "ahkEXE=$wd\AutoHotkey\AutoHotkey${{ inputs.base }}.exe" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+      env:
+        token: ${{ inputs.token }}
 
     - name: Compile script with Ahk2Exe
       shell: pwsh
