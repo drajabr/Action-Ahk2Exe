@@ -27,8 +27,8 @@ runs:
     - name: Set WORKING_DIRECTORY
       shell: pwsh
       run: |
-        $cwd = (Get-Item .).FullName
-        echo "WORKING_DIRECTORY=$cwd" >> $env:GITHUB_ENV
+        $cwd = "${{ runner.temp }}"
+
         
     - name: Install AutoHotkey + Ahk2Exe
       shell: pwsh
@@ -58,15 +58,15 @@ runs:
         Remove-Item $ahkZip, $compilerZip -Force
 
         # Add to PATH and export ahkEXE
-        "$wd\AutoHotkey;$wd\AutoHotkey\Compiler" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        "ahkEXE=$wd\AutoHotkey\AutoHotkey${{ inputs.base }}.exe" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+        "ahkCompiler=$wd\AutoHotkey\Compiler\Ahk2Exe.exe" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+        "ahkBase=$wd\AutoHotkey\AutoHotkey${{ inputs.base }}.exe" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
       env:
         token: ${{ inputs.token }}
 
     - name: Compile script with Ahk2Exe
       shell: pwsh
       run: |
-        $cmd = 'ahk2exe.exe /silent verbose'
+        $cmd = "`"$env:ahkCompiler`" /silent verbose"
         
         $in = "${{ inputs.in }}"
         $cmd += " /in `"$in`""
@@ -86,7 +86,7 @@ runs:
 
         # Optional base
         if ("${{ inputs.base }}") {
-          $cmd += " /base `"$env:ahkEXE`""
+          $cmd += " /base `"$env:ahkBase`""
         }
 
         Write-Host "Running: $cmd"
