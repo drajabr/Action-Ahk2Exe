@@ -26,8 +26,10 @@ runs:
   steps:
     - name: Set WORKING_DIRECTORY
       shell: pwsh
-      run: '"WORKING_DIRECTORY=$(Get-Item .).FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append'
-
+      run: |
+        $cwd = (Get-Item .).FullName
+        echo "WORKING_DIRECTORY=$cwd" >> $env:GITHUB_ENV
+        
     - name: Install AutoHotkey + Ahk2Exe
       shell: pwsh
       run: |
