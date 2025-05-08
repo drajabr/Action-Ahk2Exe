@@ -4,60 +4,77 @@ author: alfvar , CCCC-L, nekocodeX
 
 inputs:
   in:
-    description: The path and name of the script to compile
+    description: Path of the script to compile
     required: true
   out:
-    description: The path\name of the output .exe to be created
+    description: Output EXE path (optional)
     required: false
   base:
-    description: compile bit number 32|64
+    description: Compile bitness (32|64)
     required: false
     default: 64
   icon:
-    description: The path and name of the icon file
+    description: Path to .ico file (optional)
     required: false
     default: ''
 
 runs:
   using: composite
   steps:
-    - name: Install AutoHotkey
+    - name: Set WORKING_DIRECTORY
+      shell: pwsh
+      run: '"WORKING_DIRECTORY=$(Get-Item .).FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append'
+
+    - name: Install AutoHotkey + Ahk2Exe
       shell: pwsh
       run: |
-        $wd = (Get-Item .).FullName
-        Invoke-WebRequest (Invoke-RestMethod https://api.github.com/repos/AutoHotkey/AutoHotkey/releases/latest).assets[0].browser_download_url -OutFile "$wd\autohotkey.zip";
-        $response = Invoke-RestMethod "https://api.github.com/repos/AutoHotkey/Ahk2Exe/releases/latest"
-        foreach ($asset in $response[0].assets) {
-          $url = $asset.browser_download_url
-        }
-        Invoke-WebRequest $url -OutFile "$wd\autohotkey2exe.zip";
+        $wd = $env:WORKING_DIRECTORY
+
+        # Download and extract AutoHotkey
+        $ahkRelease = Invoke-RestMethod "https://api.github.com/repos/AutoHotkey/AutoHotkey/releases/latest"
+        $ahkZip = Join-Path $wd "autohotkey.zip"
+        Invoke-WebRequest $ahkRelease.assets[0].browser_download_url -OutFile $ahkZip
+
+        # Download and extract Ahk2Exe
+        $compilerRelease = Invoke-RestMethod "https://api.github.com/repos/AutoHotkey/Ahk2Exe/releases/latest"
+        $compilerAsset = $compilerRelease.assets | Select-Object -First 1
+        $compilerZip = Join-Path $wd "ahk2exe.zip"
+        Invoke-WebRequest $compilerAsset.browser_download_url -OutFile $compilerZip
+
+        # Extract both
+        Expand-Archive $ahkZip -DestinationPath "$wd\AutoHotkey" -Force
+        Expand-Archive $compilerZip -DestinationPath "$wd\AutoHotkey\Compiler" -Force
+        Remove-Item $ahkZip, $compilerZip -Force
+
+        # Add to PATH and export ahkEXE
+        "$wd\AutoHotkey;$wd\AutoHotkey\Compiler" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        "ahkEXE=$wd\AutoHotkey\AutoHotkey${{ inputs.base }}.exe" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+    - name: Compile script with Ahk2Exe
+      shell: pwsh
+      run: |
+        $cmd = 'ahk2exe.exe /silent verbose'
         
-        Expand-Archive -Path "$wd\autohotkey.zip" -DestinationPath "$wd\autoHotkey\" -Force;
-        Expand-Archive -Path "$wd\autohotkey2exe.zip" -DestinationPath "$wd\autoHotkey\Compiler" -Force;
-        Remove-Item -Path "$wd\autohotkey.zip" -Force
-        Remove-Item -Path "$wd\autohotkey2exe.zip" -Force
-        Write-Output ("$wd\autohotkey\;" + "$wd\autohotkey\Compiler") | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        Write-Output ("ahkEXE=$wd\autohotkey\AutoHotkey${{inputs.base}}.exe") | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+        $in = "${{ inputs.in }}"
+        $cmd += " /in `"$in`""
 
-    - name: Run AHK2Exe
-      shell: pwsh
-      run: |
-        $command = 'ahk2exe.exe /silent verbose '
-        if('${{inputs.in}}' -ne ''){
-          $command += '/in "${{inputs.in}}" '
-          if('${{inputs.icon}}' -eq ''){
-            $icon = [System.IO.Path]::ChangeExtension('${{inputs.in}}', '.ico')
-          } else {
-            $icon = '${{inputs.icon}}'
-          }
-          $command += '/icon "$icon" '
+        # Handle optional icon
+        $icon = if ("${{ inputs.icon }}") {
+          "${{ inputs.icon }}"
+        } else {
+          [System.IO.Path]::ChangeExtension($in, ".ico")
         }
-        if('${{inputs.out}}' -ne ''){
-          $command += '/out "${{inputs.out}}" '
-        }
-        if('${{inputs.base}}' -ne ''){
-          $command += '/base "$Env:ahkEXE" '
-        }
-        Invoke-Expression $command
+        $cmd += " /icon `"$icon`""
 
-        Write-Output $command
+        # Optional output
+        if ("${{ inputs.out }}") {
+          $cmd += " /out `"$("${{ inputs.out }}")`""
+        }
+
+        # Optional base
+        if ("${{ inputs.base }}") {
+          $cmd += " /base `"$env:ahkEXE`""
+        }
+
+        Write-Host "Running: $cmd"
+        Invoke-Expression $cmd
