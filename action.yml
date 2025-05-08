@@ -27,8 +27,8 @@ runs:
     - name: Set WORKING_DIRECTORY
       shell: pwsh
       run: |
-        $cwd = "${{ runner.temp }}"
-
+        $cwd = ${{ runner.temp }}
+        echo "WORKING_DIRECTORY=$cwd" >> $env:GITHUB_ENV
         
     - name: Install AutoHotkey + Ahk2Exe
       shell: pwsh
